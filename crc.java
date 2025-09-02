@@ -40,7 +40,7 @@ public class CRCDemo {
             System.out.println("Errorneous data:"+new String(t));
         }
         crc();
-        for(x=0;x<glen-1);x++)
+        for(x=0;x<(glen-1);x++)
         {
             if(cs[x]=='1')
             {
@@ -54,7 +54,7 @@ public class CRCDemo {
             System.out.println("no error detected during transfer");
     }
     
-    public static void crc
+    public static void crc()
     {
         for(x=0;x<glen;x++)
             cs[x]=t[x];
