@@ -1,4 +1,4 @@
-package bellmandemofinal;
+package bellmandemofinall;
 import java.util.*;
 public class BellmanDemoFinall {
     static Scanner in=new Scanner(System.in);
@@ -32,36 +32,43 @@ public class BellmanDemoFinall {
         int parent[]=new int[20];
         for(int i=1;i<=V;i++)
             distance[i]=999;
+        int i = 0;
         parent[i]=-1;
     }
-    System.out.println("Enter the source vertex:");
+    System.out.println("Enter the source vertex");
     S=in.nextInt();
     distance[S]=0;
-    for(int k=1;k<=E;k++)
+    for(int i=1;i<=V;i++)
     {
-        edge[k][0];
-        v=edge[k][1];
-        if(distance[u]+w[u][v]<distance[v])
+        for(int k=1;k<=E;k++)
         {
-            distance[v]=distance[u]=w[u][v];
-            parent[v]=u;
+            u=edge[k][0];
+            v=edge[k][1];
+            if(distance[u]+w[u][v]<distance[v])
+            {
+                distance[v]=distance[u]+w[u][v];
+                parent[v]=u;
+            }
         }
     }
-}
-for(int k=1;k<=E;k++)
-{
-u=edge[k][0];
-v=edge[k][1];
-if(distance[u]+w[u][v]<distance[v])
-flag=0;
-}
-if(flag==1)
-for(int i=1;i<=V;i++)
-System.out.println("Vertex"+i+"->cost="+distance[i]+"parent="+(parent[i]));
-return flag;
+    for(int k=1;k<=E;k++)
+    {
+        u=edge[k][0];
+        v=edge[k][1];
+        if(distance[u]+w[u][v]<distance[v])
+            flag=0;
+    }
+    for(int i=1;i<=V;i++)
+    System.out.println("Vertex"+i+"->cost="+distance[i]+"parent="+(parent[i]));
+    return flag;
 }
 }
-
+        
+        
+           
+        
+                
+   
             
         
         
