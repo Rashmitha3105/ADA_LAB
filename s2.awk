@@ -1,83 +1,98 @@
 BEGIN {
-count = 0;
 }
+
 {
-event = $1;
-if(event=="d")
-{
-count++;
-}}
-END{
-printf("\nNumber of packets dropped is:%d\n",count);
+    if ($6 == "command_")
+    {
+        printf(".1f .1f\n", $1, $7);
+    }
+}
+
+END {
 }
 
 
-set ns [new Simulator]
-set tracefile [open s2.tr w]
-$ns trace-all $tracefile
-set namfile [open s2.nam w]
+
+
+s3.tcl
+
+set ns [new simulator]
+set namfile [open s3.nam w]
 $ns namtrace-all $namfile
+set tracefile [open s3.tr w]
+$ns trace-all $tracefile
+
 proc finish {} {
-global ns tracefile namfile
-$ns flush-trace
-close $tracefile
-close $namfile
-exec nam s2.nam &
-exec awk -f s2.awk s2.tr &
-exit 0
+    global ns namfile tracefile
+    $ns flush-trace
+    close $namfile
+    close $tracefile
+    exec nam s3.nam &
+    exit 0
 }
 
 set n0 [$ns node]
 set n1 [$ns node]
 set n2 [$ns node]
 set n3 [$ns node]
-set n4 [$ns node]
-set n5 [$ns node]
+set n4 [$ns node]
+set n5 [$ns node]
 set n6 [$ns node]
-$ns duplex-link $n1 $n0 1Mb 10ms DropTail
-$ns duplex-link $n2 $n0 1Mb 10ms DropTail
-$ns duplex-link $n3 $n0 1.75Mb 20ms DropTail
-$ns duplex-link $n4 $n0 1Mb 10ms DropTail
-$ns duplex-link $n5 $n0 1Mb 10ms DropTail
-$ns duplex-link $n6 $n0 1Mb 10ms DropTail
+set n7 [$ns node]
+set n8 [$ns node]
 
-$ns duplex-link-op $n0 $n1 orient right
-$ns duplex-link-op $n0 $n2 orient left
-$ns duplex-link-op $n0 $n3 orient right-up
-$ns duplex-link-op $n0 $n4 orient right-down
-$ns duplex-link-op $n0 $n5 orient left-up
-$ns duplex-link-op $n0 $n6 orient left-down
+$ns color 1 Blue
+$ns color 2 Red
 
-Agent/Ping instproc recv {from rtt} {
-$self instvar node_
-puts "node [$node_ id] received ping answer from $from with round-trip-time $rtt ms"
-}
+$n7 shape box
+$n7 color Blue
+$n8 shape hexagon
+$n8 color Red
 
-set p1 [new Agent/Ping]
-set p2 [new Agent/Ping]
-set p3 [new Agent/Ping]
-set p4 [new Agent/Ping]
-set p5 [new Agent/Ping]
-set p6 [new Agent/Ping]
+$ns duplex-link $n1 $n0 2Mb 10ms DropTail
+$ns duplex-link $n2 $n0 2Mb 10ms DropTail
+$ns duplex-link $n0 $n3 1Mb 20ms DropTail
+$ns make-lan "$n3 $n4 $n5 $n6 $n7 $n8" 512Kb 10ms LL Queue/DropTail Mac/802_3
 
-$ns attach-agent $n1 $p1
-$ns attach-agent $n2 $p2
-$ns attach-agent $n3 $p3
-$ns attach-agent $n4 $p4
-$ns attach-agent $n5 $p5
-$ns attach-agent $n6 $p6
-$ns queue-limit $n0 $n4 1
-$ns queue-limit $n0 $n5 2
-$ns queue-limit $n0 $n6 2
-$ns connect $p1 $p4
-$ns connect $p2 $p5
-$ns connect $p3 $p6
+$ns duplex-link-op $n1 $n0 orient right-down
+$ns duplex-link-op $n2 $n0 orient right-up
+$ns duplex-link-op $n0 $n3 orient right
+$ns queue-limit $n0 $n3 20
 
-$ns at 0.2 "$p1 send"
-$ns at 0.4 "$p2 send"
-$ns at 0.6 "$p3 send"
-$ns at 1.0 "$p4 send"
-$ns at 1.2 "$p5 send"
-$ns at 1.4 "$p6 send"
-$ns at 2.0 "finish"
-$ns run4
+set tcp1 [new Agent/TCP/Vegas]
+$ns attach-agent $n1 $tcp1
+set sink1 [new Agent/TCPSink]
+$ns attach-agent $n7 $sink1
+
+set ftp1 [new Application/FTP]
+$ftp1 attach-agent $tcp1
+$ns connect $tcp1 $sink1
+$tcp1 set class_ 1
+$tcp1 set packetSize_ 55
+
+set tf1 [open cwnd1.tr w]
+$tcp1 attach $tf1
+$tcp1 trace cwnd_
+
+set tcp2 [new Agent/TCP/Reno]
+$ns attach-agent $n2 $tcp2
+set sink2 [new Agent/TCPSink]
+$ns attach-agent $n8 $sink2
+
+set ftp2 [new Application/FTP]
+$ftp2 attach-agent $tcp2
+$ns connect $tcp2 $sink2
+$tcp2 set class_ 2
+$tcp2 set packetSize_ 55
+
+set tfile2 [open cwnd2.tr w]
+$tcp2 attach $tfile2
+$tcp2 trace cwnd_
+
+$ns at 0.5 "$ftp1 start"
+$ns at 1.0 "$ftp2 start"
+$ns at 5.0 "$ftp2 stop"
+$ns at 5.0 "$ftp1 stop"
+$ns at 5.5 "finish"
+
+$ns run
